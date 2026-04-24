@@ -33,11 +33,16 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel $(sysctl -n hw.ncpu)
 
-      - name: Deploy Qt frameworks
+      - name: Deploy Qt frameworks & ad-hoc sign
         run: |
           brew install create-dmg
           cd build
           macdeployqt Simple-x264-Launcher.app -verbose=1
+          # Ad-hoc code sign all frameworks and the app itself
+          find Simple-x264-Launcher.app -name "*.dylib" -o -name "*.framework" | while read f; do
+            codesign --force --deep --sign - "$f" 2>/dev/null || true
+          done
+          codesign --force --deep --sign - Simple-x264-Launcher.app
 
       - name: Create DMG
         run: |
