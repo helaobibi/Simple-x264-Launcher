@@ -195,6 +195,7 @@ void EncodeThread::start(Priority priority)
 
 int EncodeThread::threadMain(void)
 {
+	ExecutionStateHandler executionStateHandler;
 	QDateTime startTime = QDateTime::currentDateTime();
 
 	// -----------------------------------------------------------------------------------
