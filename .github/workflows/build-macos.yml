@@ -1,0 +1,66 @@
+name: Build macOS (ARM64)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14  # Apple Silicon (ARM64) runner
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          modules: 'qtbase'
+          cache: true
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel $(sysctl -n hw.ncpu)
+
+      - name: Deploy Qt frameworks
+        run: |
+          brew install create-dmg
+          cd build
+          macdeployqt Simple-x264-Launcher.app -verbose=1
+
+      - name: Create DMG
+        run: |
+          create-dmg \
+            --volname "Simple x264 Launcher" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Simple-x264-Launcher.app" 150 190 \
+            --app-drop-link 450 190 \
+            "Simple-x264-Launcher-arm64.dmg" \
+            "build/Simple-x264-Launcher.app" \
+          || true  # create-dmg returns non-zero if DMG already exists
+
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple-x264-Launcher-macOS-arm64-app
+          path: build/Simple-x264-Launcher.app
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple-x264-Launcher-macOS-arm64-dmg
+          path: Simple-x264-Launcher-arm64.dmg
