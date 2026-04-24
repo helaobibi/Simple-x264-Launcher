@@ -30,9 +30,9 @@
 //MUtils compat
 #include "mutils_compat.h"
 
-AbstractEncoder *EncoderFactory::createEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile)
+AbstractEncoder *EncoderFactory::createEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile)
 {
-	AbstractEncoder *encoder = NULL;
+	AbstractEncoder *encoder = nullptr;
 
 	switch(options->encType())
 	{
@@ -59,7 +59,6 @@ const AbstractEncoderInfo& EncoderFactory::getEncoderInfo(const OptionsModel::En
 		return X265Encoder::encoderInfo();
 	default:
 		MUTILS_THROW("Unknown encoder type encountered!");
+		return X264Encoder::encoderInfo(); /*unreachable, silences compiler warning*/
 	}
-
-	return *((AbstractEncoderInfo*)NULL);
 }

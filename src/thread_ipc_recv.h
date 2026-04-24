@@ -23,6 +23,7 @@
 #pragma once
 
 #include "thread_abstract.h"
+#include <atomic>
 
 namespace MUtils
 {
@@ -43,7 +44,7 @@ signals:
 	void receivedCommand(const int &command, const QStringList &args, const quint32 &flags);
 
 protected:
-	volatile bool m_stopFlag;
+	std::atomic<bool> m_stopFlag;
 	MUtils::IPCChannel *const m_ipcChannel;
 
 	//Entry point

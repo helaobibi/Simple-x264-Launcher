@@ -34,7 +34,7 @@ public:
 	~JobObject(void);
 
 	bool addProcessToJob(const QProcess *proc);
-	bool terminateJob(unsigned int exitCode = -1);
+	bool terminateJob(unsigned int exitCode = 0);
 
 private:
 	QList<pid_t> m_trackedPids;

@@ -23,7 +23,7 @@
 
 #include <QString>
 
-static const struct
+inline const struct
 {
 	const char *pcExt;
 	const char *pcStr;

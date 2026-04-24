@@ -26,7 +26,7 @@
 class X265Encoder : public AbstractEncoder
 {
 public:
-	X265Encoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile);
+	X265Encoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile);
 	virtual ~X265Encoder(void);
 
 	virtual QString getName(void) const;

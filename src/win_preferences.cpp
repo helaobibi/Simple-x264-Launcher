@@ -144,6 +144,7 @@ void PreferencesDialog::emulateMouseEvent(QObject *object, QEvent *event, QWidge
 			(
 				event->type(),
 				localPos,
+				mouseEvent->globalPosition(),
 				Qt::LeftButton,
 				Qt::LeftButton,
 				Qt::NoModifier
@@ -172,7 +173,7 @@ void PreferencesDialog::done(int n)
 void PreferencesDialog::resetButtonPressed(void)
 {
 	PreferencesModel::initPreferences(m_preferences);
-	showEvent(NULL);
+	showEvent(nullptr);
 }
 
 void PreferencesDialog::disableWarningsToggled(bool checked)
@@ -183,7 +184,7 @@ void PreferencesDialog::disableWarningsToggled(bool checked)
 		text += QString("<nobr>%1</nobr><br>").arg(tr("Please note that VapourSynth support might be unavailable <b>without</b> any notice!"));
 		text += QString("<nobr>%1</nobr><br>").arg(tr("Also note that the CLI option <tt>--console</tt> may be used to get more diagnostic infomation."));
 
-		if(QMessageBox::warning(this, tr("VapourSynth Warnings"), text.replace("-", "&minus;"), tr("Continue"), tr("Revert"), QString(), 1) != 0)
+		if(QMessageBox::warning(this, tr("VapourSynth Warnings"), text.replace("-", "&minus;"), QMessageBox::Ok | QMessageBox::Cancel) != QMessageBox::Ok)
 		{
 			UPDATE_CHECKBOX(ui->checkDisableWarnings, false, true);
 		}

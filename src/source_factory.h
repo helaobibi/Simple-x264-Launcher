@@ -34,7 +34,7 @@ public:
 		SourceType_MAX = SourceType_VPS
 	};
 
-	static AbstractSource *createSource(const SourceType &type, JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile);
+	static AbstractSource *createSource(const SourceType &type, JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile);
 	static const AbstractSourceInfo& getSourceInfo(const SourceType &type);
 
 private:

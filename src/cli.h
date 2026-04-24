@@ -27,18 +27,18 @@
 // CLI parameter identifiers
 ///////////////////////////////////////////////////////////////////////////////
 
-static const char *const CLI_PARAM_ADD_FILE           = "add-file";
-static const char *const CLI_PARAM_ADD_JOB            = "add-job";
-static const char *const CLI_PARAM_FORCE_START        = "force-start";
-static const char *const CLI_PARAM_FORCE_ENQUEUE      = "force-enqueue";
-static const char *const CLI_PARAM_SKIP_VPS_CHECK     = "skip-vapoursynth-check";
-static const char *const CLI_PARAM_SKIP_VERSION_CHECK = "skip-version-checks";
-static const char *const CLI_PARAM_NO_DEADLOCK        = "no-deadlock-detection";
-static const char *const CLI_PARAM_NO_GUI_STYLE       = "no-style";
-static const char* const CLI_PARAM_DARK_GUI_MODE      = "dark-gui-mode";
-static const char *const CLI_PARAM_FIRST_RUN          = "first-run";
-static const char *const CLI_PARAM_CONSOLE_SHOW       = "console";
-static const char *const CLI_PARAM_CONSOLE_HIDE       = "no-console";
-static const char *const CLI_PARAM_CPU_NO_64BIT       = "force-cpu-no-64bit";
-static const char *const CLI_PARAM_CPU_NO_SSE         = "force-cpu-no-sse";
-static const char *const CLI_PARAM_CPU_NO_INTEL       = "force-cpu-no-intel";
+inline constexpr const char *const CLI_PARAM_ADD_FILE           = "add-file";
+inline constexpr const char *const CLI_PARAM_ADD_JOB            = "add-job";
+inline constexpr const char *const CLI_PARAM_FORCE_START        = "force-start";
+inline constexpr const char *const CLI_PARAM_FORCE_ENQUEUE      = "force-enqueue";
+inline constexpr const char *const CLI_PARAM_SKIP_VPS_CHECK     = "skip-vapoursynth-check";
+inline constexpr const char *const CLI_PARAM_SKIP_VERSION_CHECK = "skip-version-checks";
+inline constexpr const char *const CLI_PARAM_NO_DEADLOCK        = "no-deadlock-detection";
+inline constexpr const char *const CLI_PARAM_NO_GUI_STYLE       = "no-style";
+inline constexpr const char *const CLI_PARAM_DARK_GUI_MODE      = "dark-gui-mode";
+inline constexpr const char *const CLI_PARAM_FIRST_RUN          = "first-run";
+inline constexpr const char *const CLI_PARAM_CONSOLE_SHOW       = "console";
+inline constexpr const char *const CLI_PARAM_CONSOLE_HIDE       = "no-console";
+inline constexpr const char *const CLI_PARAM_CPU_NO_64BIT       = "force-cpu-no-64bit";
+inline constexpr const char *const CLI_PARAM_CPU_NO_SSE         = "force-cpu-no-sse";
+inline constexpr const char *const CLI_PARAM_CPU_NO_INTEL       = "force-cpu-no-intel";

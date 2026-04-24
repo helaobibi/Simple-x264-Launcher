@@ -73,10 +73,10 @@ namespace MUtils
 	}
 
 	// ========================================================================
-	// MUtils::CPUFetaures namespace (note: original typo preserved)
+	// MUtils::CPUFeatures namespace
 	// ========================================================================
 
-	namespace CPUFetaures
+	namespace CPUFeatures
 	{
 		enum CPUFlags
 		{

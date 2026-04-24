@@ -54,12 +54,12 @@ void AbstractThread::run(void)
 	runChecked1(this, m_success, &m_exception);
 }
 
-void AbstractThread::runChecked1(AbstractThread *const thread, volatile int &success, volatile bool *exception)
+void AbstractThread::runChecked1(AbstractThread *const thread, std::atomic<int> &success, std::atomic<bool> *exception)
 {
 	return runChecked2(thread, success, exception);
 }
 
-void AbstractThread::runChecked2(AbstractThread *const thread, volatile int &success, volatile bool *exception)
+void AbstractThread::runChecked2(AbstractThread *const thread, std::atomic<int> &success, std::atomic<bool> *exception)
 {
 #if defined(NDEBUG)
 	try

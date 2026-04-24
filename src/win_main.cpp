@@ -62,8 +62,9 @@
 #include <QSystemTrayIcon>
 #include <QMovie>
 #include <QTextDocument>
-#include <ctime>
 #include <QMimeData>
+#include <QRandomGenerator>
+#include <QPushButton>
 
 //Constants
 static const char *tpl_last   = "<LAST_USED>";
@@ -79,7 +80,7 @@ static const int   vsynth_rev = 57;
 #define LINK(URL) (QString("<a href=\"%1\">%1</a>").arg((URL)))
 #define INIT_ERROR_EXIT() do { close(); qApp->exit(-1); return; } while(0)
 #define SETUP_WEBLINK(OBJ, URL) do { (OBJ)->setData(QVariant(QUrl(URL))); connect((OBJ), SIGNAL(triggered()), this, SLOT(showWebLink())); } while(0)
-#define APP_IS_READY (m_initialized && (!m_fileTimer->isActive()) && (QApplication::activeModalWidget() == NULL))
+#define APP_IS_READY (m_initialized && (!m_fileTimer->isActive()) && (QApplication::activeModalWidget() == nullptr))
 #define ENSURE_APP_IS_READY() do { if(!APP_IS_READY) { MUtils::Sound::beep(MUtils::Sound::BEEP_WRN); qWarning("Cannot perfrom this action at this time!"); return; } } while(0)
 #define X264_STRCMP(X,Y) ((X).compare((Y), Qt::CaseInsensitive) == 0)
 
@@ -90,15 +91,15 @@ static const int   vsynth_rev = 57;
 /*
  * Constructor
  */
-MainWindow::MainWindow(const MUtils::CPUFetaures::cpu_info_t &cpuFeatures, MUtils::IPCChannel *const ipcChannel)
+MainWindow::MainWindow(const MUtils::CPUFeatures::cpu_info_t &cpuFeatures, MUtils::IPCChannel *const ipcChannel)
 :
 	m_ipcChannel(ipcChannel),
-	m_sysinfo(NULL),
-	m_options(NULL),
-	m_jobList(NULL),
+	m_sysinfo(nullptr),
+	m_options(nullptr),
+	m_jobList(nullptr),
 	m_pendingFiles(new QStringList()),
-	m_preferences(NULL),
-	m_recentlyUsed(NULL),
+	m_preferences(nullptr),
+	m_recentlyUsed(nullptr),
 	m_postOperation(POST_OP_DONOTHING),
 	m_initialized(false),
 	ui(new Ui::MainWindow())
@@ -115,9 +116,9 @@ MainWindow::MainWindow(const MUtils::CPUFetaures::cpu_info_t &cpuFeatures, MUtil
 	//Create and initialize the sysinfo object
 	m_sysinfo.reset(new SysinfoModel());
 	m_sysinfo->setAppPath(QApplication::applicationDirPath());
-	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_MMX, cpuFeatures.features & MUtils::CPUFetaures::FLAG_MMX);
-	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_SSE, cpuFeatures.features & MUtils::CPUFetaures::FLAG_SSE);
-	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_X64, cpuFeatures.x64 && (cpuFeatures.features & MUtils::CPUFetaures::FLAG_SSE2)); //X64 implies SSE2
+	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_MMX, cpuFeatures.features & MUtils::CPUFeatures::FLAG_MMX);
+	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_SSE, cpuFeatures.features & MUtils::CPUFeatures::FLAG_SSE);
+	m_sysinfo->setCPUFeatures(SysinfoModel::CPUFeatures_X64, cpuFeatures.x64 && (cpuFeatures.features & MUtils::CPUFeatures::FLAG_SSE2)); //X64 implies SSE2
 
 	//Load preferences
 	m_preferences.reset(new PreferencesModel());
@@ -167,8 +168,8 @@ MainWindow::MainWindow(const MUtils::CPUFetaures::cpu_info_t &cpuFeatures, MUtil
 
 	//Setup key listener
 	m_inputFilter_jobList.reset(new InputEventFilter(ui->jobsView));
-	m_inputFilter_jobList->addKeyFilter(Qt::ControlModifier | Qt::Key_Up,   1);
-	m_inputFilter_jobList->addKeyFilter(Qt::ControlModifier | Qt::Key_Down, 2);
+	m_inputFilter_jobList->addKeyFilter(QKeyCombination(Qt::ControlModifier, Qt::Key_Up).toCombined(),   1);
+	m_inputFilter_jobList->addKeyFilter(QKeyCombination(Qt::ControlModifier, Qt::Key_Down).toCombined(), 2);
 	connect(m_inputFilter_jobList.data(), SIGNAL(keyPressed(int)), this, SLOT(jobListKeyPressed(int)));
 	
 	//Setup mouse listener
@@ -345,7 +346,7 @@ void MainWindow::openActionTriggered()
 	ENSURE_APP_IS_READY();
 	qWarning("openActionTriggered()");
 
-	QStringList fileList = QFileDialog::getOpenFileNames(this, tr("Open Source File(s)"), m_recentlyUsed->sourceDirectory(), AddJobDialog::getInputFilterLst(), NULL, QFileDialog::DontUseNativeDialog);
+	QStringList fileList = QFileDialog::getOpenFileNames(this, tr("Open Source File(s)"), m_recentlyUsed->sourceDirectory(), AddJobDialog::getInputFilterLst(), nullptr, QFileDialog::DontUseNativeDialog);
 	if(!fileList.empty())
 	{
 		m_recentlyUsed->setSourceDirectory(QFileInfo(fileList.last()).absolutePath());
@@ -376,7 +377,7 @@ void MainWindow::cleanupActionTriggered(void)
 	if (sender)
 	{
 		const QVariant data = sender->data();
-		if (data.isValid() && (data.type() == QVariant::Bool))
+		if (data.isValid() && (data.typeId() == QMetaType::Bool))
 		{
 			const bool mode = data.toBool();
 			const int rows = m_jobList->rowCount(QModelIndex());
@@ -421,7 +422,7 @@ void MainWindow::postOpActionTriggered(void)
 	if (sender)
 	{
 		const QVariant data = sender->data();
-		if (data.isValid() && (data.type() == QVariant::Int))
+		if (data.isValid() && (data.typeId() == QMetaType::Int))
 		{
 			const postOp_t mode = (postOp_t)data.toInt();
 			if ((mode >= POST_OP_DONOTHING) && (mode <= POST_OP_HIBERNATE))
@@ -451,7 +452,7 @@ void MainWindow::abortButtonPressed(void)
 {
 	ENSURE_APP_IS_READY();
 
-	if(QMessageBox::question(this, tr("Abort Job?"), tr("<nobr>Do you really want to <b>abort</b> the selected job now?</nobr>"), tr("Back"), tr("Abort Job")) == 1)
+	if(QMessageBox::question(this, tr("Abort Job?"), tr("<nobr>Do you really want to <b>abort</b> the selected job now?</nobr>"), QMessageBox::Cancel | QMessageBox::Yes) == QMessageBox::Yes)
 	{
 		m_jobList->abortJob(ui->jobsView->currentIndex());
 	}
@@ -476,9 +477,10 @@ void MainWindow::browseButtonPressed(void)
 	ENSURE_APP_IS_READY();
 
 	QString outputFile = m_jobList->getJobOutputFile(ui->jobsView->currentIndex());
-	if((!outputFile.isEmpty()) && QFileInfo(outputFile).exists() && QFileInfo(outputFile).isFile())
+	const QFileInfo outputFileInfo(outputFile);
+	if((!outputFile.isEmpty()) && outputFileInfo.exists() && outputFileInfo.isFile())
 	{
-		QProcess::startDetached(QString::fromLatin1("open"), QStringList() << QString::fromLatin1("-R") << QDir::toNativeSeparators(outputFile), QFileInfo(outputFile).path());
+		QProcess::startDetached(QString::fromLatin1("open"), QStringList() << QString::fromLatin1("-R") << QDir::toNativeSeparators(outputFile), outputFileInfo.path());
 	}
 	else
 	{
@@ -527,6 +529,7 @@ void MainWindow::pauseButtonPressed(bool checked)
 		MUtils::Sound::beep(MUtils::Sound::BEEP_WRN);
 		qWarning("Cannot perfrom this action at this time!");
 		ui->buttonPauseJob->setChecked(!checked);
+		return;
 	}
 
 	if(checked)
@@ -579,7 +582,7 @@ void MainWindow::jobSelected(const QModelIndex & current, const QModelIndex & pr
 	{
 		ui->logView->setModel(m_jobList->getLogFile(current));
 		connect(ui->logView->model(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(jobLogExtended(QModelIndex, int, int)));
-		foreach(QAction *action, ui->logView->actions())
+		for(QAction *action : ui->logView->actions())
 		{
 			action->setEnabled(true);
 		}
@@ -592,8 +595,8 @@ void MainWindow::jobSelected(const QModelIndex & current, const QModelIndex & pr
 	}
 	else
 	{
-		ui->logView->setModel(NULL);
-		foreach(QAction *action, ui->logView->actions())
+		ui->logView->setModel(nullptr);
+		for(QAction *action : ui->logView->actions())
 		{
 			action->setEnabled(false);
 		}
@@ -674,11 +677,8 @@ void MainWindow::showAbout(void)
 {
 	ENSURE_APP_IS_READY();
 	
-	if(AboutDialog *aboutDialog = new AboutDialog(this))
-	{
-		aboutDialog->exec();
-		MUTILS_DELETE(aboutDialog);
-	}
+	QScopedPointer<AboutDialog> aboutDialog(new AboutDialog(this));
+	aboutDialog->exec();
 }
 
 /*
@@ -692,7 +692,7 @@ void MainWindow::showWebLink(void)
 	{
 		if(QAction *action = dynamic_cast<QAction*>(obj))
 		{
-			if(action->data().type() == QVariant::Url)
+			if(action->data().typeId() == QMetaType::QUrl)
 			{
 				QDesktopServices::openUrl(action->data().toUrl());
 			}
@@ -707,10 +707,8 @@ void MainWindow::showPreferences(void)
 {
 	ENSURE_APP_IS_READY();
 
-	PreferencesDialog *preferences = new PreferencesDialog(this, m_preferences.data(), m_sysinfo.data());
+	QScopedPointer<PreferencesDialog> preferences(new PreferencesDialog(this, m_preferences.data(), m_sysinfo.data()));
 	preferences->exec();
-
-	MUTILS_DELETE(preferences);
 }
 
 /*
@@ -847,7 +845,7 @@ void MainWindow::shutdownComputer(void)
 		}
 		progressDialog.setValue(i+1);
 		progressDialog.setLabelText(text.arg(iTimeout-i));
-		if(iTimeout-i == 3) progressDialog.setCancelButton(NULL);
+		if(iTimeout-i == 3) progressDialog.setCancelButton(nullptr);
 		QApplication::processEvents();
 		MUtils::Sound::play_sound(((i < iTimeout) ? "beep" : "beep2"), false);
 	}
@@ -908,17 +906,20 @@ void MainWindow::init(void)
 		}
 		if(!ok)
 		{
-			int val = QMessageBox::warning(this, tr("Write Test Failed"), tr("<nobr>The application was launched in portable mode, but the program path is <b>not</b> writable!</nobr>"), tr("Quit"), tr("Ignore"));
-			if(val != 1) INIT_ERROR_EXIT();
+			int val = QMessageBox::warning(this, tr("Write Test Failed"), tr("<nobr>The application was launched in portable mode, but the program path is <b>not</b> writable!</nobr>"), QMessageBox::Close | QMessageBox::Ignore);
+			if(val != QMessageBox::Ignore) INIT_ERROR_EXIT();
 		}
 	}
 
 	//Pre-release popup
 	if(x264_is_prerelease())
 	{
-		srand(time(NULL)); int rnd = rand() % 3;
-		int val = QMessageBox::information(this, tr("Pre-Release Version"), tr("Note: This is a pre-release version. Please do NOT use for production!<br>Click the button #%1 in order to continue...<br><br>(There will be no such message box in the final version of this application)").arg(QString::number(rnd + 1)), tr("(1)"), tr("(2)"), tr("(3)"), rand() % 3);
-		if(rnd != val) INIT_ERROR_EXIT();
+		const int rnd = QRandomGenerator::global()->bounded(3);
+		QMessageBox msgBox(QMessageBox::Information, tr("Pre-Release Version"), tr("Note: This is a pre-release version. Please do NOT use for production!<br>Click the button #%1 in order to continue...<br><br>(There will be no such message box in the final version of this application)").arg(QString::number(rnd + 1)), QMessageBox::NoButton, this);
+		QPushButton *btns[3] = { msgBox.addButton(tr("(1)"), QMessageBox::ActionRole), msgBox.addButton(tr("(2)"), QMessageBox::ActionRole), msgBox.addButton(tr("(3)"), QMessageBox::ActionRole) };
+		msgBox.setDefaultButton(btns[QRandomGenerator::global()->bounded(3)]);
+		msgBox.exec();
+		if(msgBox.clickedButton() != btns[rnd]) INIT_ERROR_EXIT();
 	}
 
 	qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -930,15 +931,15 @@ void MainWindow::init(void)
 	//Make sure this CPU can run x264 (requires MMX + MMXEXT/iSSE to run x264 with ASM enabled, additionally requires SSE1 for most x264 builds)
 	if(!m_sysinfo->getCPUFeatures(SysinfoModel::CPUFeatures_MMX))
 	{
-		QMessageBox::critical(this, tr("Unsupported CPU"), tr("<nobr>Sorry, but this machine is <b>not</b> physically capable of running x264 (with assembly).<br>Please get a CPU that supports at least the MMX and MMXEXT instruction sets!</nobr>"), tr("Quit"));
+		QMessageBox::critical(this, tr("Unsupported CPU"), tr("<nobr>Sorry, but this machine is <b>not</b> physically capable of running x264 (with assembly).<br>Please get a CPU that supports at least the MMX and MMXEXT instruction sets!</nobr>"));
 		qFatal("System does not support MMX and MMXEXT, x264 will not work !!!");
 		INIT_ERROR_EXIT();
 	}
 	else if(!m_sysinfo->getCPUFeatures(SysinfoModel::CPUFeatures_SSE))
 	{
 		qWarning("WARNING: System does not support SSE (v1), x264/x265 probably will *not* work !!!\n");
-		int val = QMessageBox::warning(this, tr("Unsupported CPU"), tr("<nobr>It appears that this machine does <b>not</b> support the SSE1 instruction set.<br>Thus most builds of x264/x265 will <b>not</b> run on this computer at all.<br><br>Please get a CPU that supports the MMX and SSE1 instruction sets!</nobr>"), tr("Quit"), tr("Ignore"));
-		if(val != 1) INIT_ERROR_EXIT();
+		int val = QMessageBox::warning(this, tr("Unsupported CPU"), tr("<nobr>It appears that this machine does <b>not</b> support the SSE1 instruction set.<br>Thus most builds of x264/x265 will <b>not</b> run on this computer at all.<br><br>Please get a CPU that supports the MMX and SSE1 instruction sets!</nobr>"), QMessageBox::Close | QMessageBox::Ignore);
+		if(val != QMessageBox::Ignore) INIT_ERROR_EXIT();
 	}
 
 	//Skip version check (not recommended!)
@@ -969,16 +970,16 @@ void MainWindow::init(void)
 			QString text = tr("A critical error was encountered while checking your VapourSynth installation.").append("<br>");
 			text += tr("This is most likely caused by an erroneous VapourSynth Plugin, please try to clean your Filters folder!").append("<br>");
 			text += tr("We suggest to move all .dll files out of your VapourSynth Filters folder and try again.");
-			const int val = QMessageBox::critical(this, tr("VapourSynth Error"), QString("<nobr>%1</nobr>").arg(text).replace("-", "&minus;"), tr("Quit"), tr("Ignore"));
-			if(val != 1) INIT_ERROR_EXIT();
+			const int val = QMessageBox::critical(this, tr("VapourSynth Error"), QString("<nobr>%1</nobr>").arg(text).replace("-", "&minus;"), QMessageBox::Close | QMessageBox::Ignore);
+			if(val != QMessageBox::Ignore) INIT_ERROR_EXIT();
 		}
 		else if((!m_sysinfo->hasVapourSynth()) && (!m_preferences->getDisableWarnings()))
 		{
 			QString text = tr("It appears that VapourSynth is <b>not</b> currently installed on your computer.<br>Therefore VapourSynth (.vpy) input will <b>not</b> be working at all!").append("<br><br>");
 			text += tr("Please download and install VapourSynth (<b>r%1</b> or later) for Windows:").arg(QString::number(vsynth_rev)).append("<br>").append(LINK(vsynth_url)).append("<br><br>");
 			text += tr("Note that Python v3.4 is a prerequisite for installing VapourSynth:").append("<br>").append(LINK(python_url)).append("<br>");
-			const int val = QMessageBox::warning(this, tr("VapourSynth Missing"), QString("<nobr>%1</nobr>").arg(text).replace("-", "&minus;"), tr("Close"), tr("Disable this Warning"));
-			if(val == 1)
+			const int val = QMessageBox::warning(this, tr("VapourSynth Missing"), QString("<nobr>%1</nobr>").arg(text).replace("-", "&minus;"), QMessageBox::Close | QMessageBox::Ignore);
+			if(val == QMessageBox::Ignore)
 			{
 				m_preferences->setDisableWarnings(true);
 				PreferencesModel::savePreferences(m_preferences.data());
@@ -1117,7 +1118,7 @@ void MainWindow::handlePendingFiles(void)
  */
 void MainWindow::handleCommand(const int &command, const QStringList &args, const quint32 &flags)
 {
-	if(!(m_initialized && (QApplication::activeModalWidget() == NULL)))
+	if(!(m_initialized && (QApplication::activeModalWidget() == nullptr)))
 	{
 		qWarning("Cannot accept commands at this time -> discarding!");
 		return;
@@ -1150,9 +1151,10 @@ void MainWindow::handleCommand(const int &command, const QStringList &args, cons
 	case IPC_OPCODE_ADD_FILE:
 		if(!args.isEmpty())
 		{
-			if(QFileInfo(args[0]).exists() && QFileInfo(args[0]).isFile())
+			const QFileInfo fileInfo(args[0]);
+			if(fileInfo.exists() && fileInfo.isFile())
 			{
-				*m_pendingFiles << QFileInfo(args[0]).canonicalFilePath();
+				*m_pendingFiles << fileInfo.canonicalFilePath();
 				if(!m_fileTimer->isActive())
 				{
 					m_fileTimer->setSingleShot(true);
@@ -1168,7 +1170,8 @@ void MainWindow::handleCommand(const int &command, const QStringList &args, cons
 	case IPC_OPCODE_ADD_JOB:
 		if(args.size() >= 3)
 		{
-			if(QFileInfo(args[0]).exists() && QFileInfo(args[0]).isFile())
+			const QFileInfo srcInfo(args[0]);
+			if(srcInfo.exists() && srcInfo.isFile())
 			{
 				OptionsModel options(m_sysinfo.data());
 				bool runImmediately = (countRunningJobs() < (m_preferences->getAutoRunNextJob() ? m_preferences->getMaxRunningJobCount() : 1));
@@ -1275,7 +1278,7 @@ void MainWindow::closeEvent(QCloseEvent *e)
 		e->ignore();
 		if(!m_preferences->getNoSystrayWarning())
 		{
-			if(QMessageBox::warning(this, tr("Jobs Are Running"), tr("<nobr>You still have running jobs, application will be minimized to notification area!<nobr>"), tr("OK"), tr("Don't Show Again")) == 1)
+			if(QMessageBox::warning(this, tr("Jobs Are Running"), tr("<nobr>You still have running jobs, application will be minimized to notification area!<nobr>"), QMessageBox::Ok | QMessageBox::Ignore) == QMessageBox::Ignore)
 			{
 				m_preferences->setNoSystrayWarning(true);
 				PreferencesModel::savePreferences(m_preferences.data());
@@ -1291,10 +1294,14 @@ void MainWindow::closeEvent(QCloseEvent *e)
 	{
 		if (!m_preferences->getSaveQueueNoConfirm())
 		{
-			const int ret = QMessageBox::question(this, tr("Jobs Are Pending"), tr("<nobr>You still have some pending jobs in your queue. How do you want to proceed?</nobr>"), tr("Save Jobs"), tr("Always Save Jobs"), tr("Discard Jobs"));
-			if ((ret >= 0) && (ret <= 1))
+			QMessageBox msgBox(QMessageBox::Question, tr("Jobs Are Pending"), tr("<nobr>You still have some pending jobs in your queue. How do you want to proceed?</nobr>"), QMessageBox::NoButton, this);
+			QPushButton *btnSave = msgBox.addButton(tr("Save Jobs"), QMessageBox::AcceptRole);
+			QPushButton *btnAlways = msgBox.addButton(tr("Always Save Jobs"), QMessageBox::AcceptRole);
+			msgBox.addButton(tr("Discard Jobs"), QMessageBox::RejectRole);
+			msgBox.exec();
+			if ((msgBox.clickedButton() == btnSave) || (msgBox.clickedButton() == btnAlways))
 			{
-				if (ret > 0)
+				if (msgBox.clickedButton() == btnAlways)
 				{
 					m_preferences->setSaveQueueNoConfirm(true);
 					PreferencesModel::savePreferences(m_preferences.data());
@@ -1319,6 +1326,7 @@ void MainWindow::closeEvent(QCloseEvent *e)
 		{
 			e->ignore();
 			QMessageBox::warning(this, tr("Failed To Exit"), tr("Warning: At least one job could not be deleted!"));
+			return;
 		}
 	}
 	
@@ -1340,15 +1348,18 @@ void MainWindow::resizeEvent(QResizeEvent *e)
  */
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 {
-	bool accept[2] = {false, false};
+	bool hasUriList = false;
 
-	foreach(const QString &fmt, event->mimeData()->formats())
+	for(const QString &fmt : event->mimeData()->formats())
 	{
-		accept[0] = accept[0] || fmt.contains("text/uri-list", Qt::CaseInsensitive);
-		accept[1] = accept[1] || fmt.contains("FileNameW", Qt::CaseInsensitive);
+		if(fmt.contains("text/uri-list", Qt::CaseInsensitive))
+		{
+			hasUriList = true;
+			break;
+		}
 	}
 
-	if(accept[0] && accept[1])
+	if(hasUriList)
 	{
 		event->acceptProposedAction();
 	}
@@ -1359,7 +1370,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
  */
 void MainWindow::dropEvent(QDropEvent *event)
 {
-	if(!(m_initialized && (QApplication::activeModalWidget() == NULL)))
+	if(!(m_initialized && (QApplication::activeModalWidget() == nullptr)))
 	{
 		qWarning("Cannot accept dropped files at this time -> discarding!");
 		return;
@@ -1401,7 +1412,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 bool MainWindow::createJob(QString &sourceFileName, QString &outputFileName, OptionsModel *options, bool &runImmediately, const bool restart, int fileNo, int fileTotal, bool *applyToAll)
 {
 	bool okay = false;
-	AddJobDialog *addDialog = new AddJobDialog(this, options, m_recentlyUsed.data(), m_sysinfo.data(), m_preferences.data());
+	QScopedPointer<AddJobDialog> addDialog(new AddJobDialog(this, options, m_recentlyUsed.data(), m_sysinfo.data(), m_preferences.data()));
 
 	addDialog->setRunImmediately(runImmediately);
 	if(!sourceFileName.isEmpty()) addDialog->setSourceFile(sourceFileName);
@@ -1428,7 +1439,6 @@ bool MainWindow::createJob(QString &sourceFileName, QString &outputFileName, Opt
 		okay = true;
 	}
 
-	MUTILS_DELETE(addDialog);
 	return okay;
 }
 
@@ -1500,9 +1510,9 @@ bool MainWindow::appendJob(const QString &sourceFileName, const QString &outputF
 /*
  * Jobs that are not completed (or failed, or aborted) yet
  */
-unsigned int MainWindow::countPendingJobs(void)
+QPair<unsigned int, unsigned int> MainWindow::countJobs(void)
 {
-	unsigned int count = 0;
+	unsigned int pending = 0, running = 0;
 	const int rows = m_jobList->rowCount(QModelIndex());
 
 	for(int i = 0; i < rows; i++)
@@ -1510,11 +1520,20 @@ unsigned int MainWindow::countPendingJobs(void)
 		JobStatus status = m_jobList->getJobStatus(m_jobList->index(i, 0, QModelIndex()));
 		if(status != JobStatus_Completed && status != JobStatus_Aborted && status != JobStatus_Failed)
 		{
-			count++;
+			pending++;
+			if(status != JobStatus_Enqueued)
+			{
+				running++;
+			}
 		}
 	}
 
-	return count;
+	return qMakePair(pending, running);
+}
+
+unsigned int MainWindow::countPendingJobs(void)
+{
+	return countJobs().first;
 }
 
 /*
@@ -1522,19 +1541,7 @@ unsigned int MainWindow::countPendingJobs(void)
  */
 unsigned int MainWindow::countRunningJobs(void)
 {
-	unsigned int count = 0;
-	const int rows = m_jobList->rowCount(QModelIndex());
-
-	for(int i = 0; i < rows; i++)
-	{
-		JobStatus status = m_jobList->getJobStatus(m_jobList->index(i, 0, QModelIndex()));
-		if(status != JobStatus_Completed && status != JobStatus_Aborted && status != JobStatus_Failed && status != JobStatus_Enqueued)
-		{
-			count++;
-		}
-	}
-
-	return count;
+	return countJobs().second;
 }
 
 /*
@@ -1610,7 +1617,7 @@ void MainWindow::updateTaskbar(JobStatus status, const QIcon &icon)
 		break;
 	}
 
-	m_taskbar->setOverlayIcon(icon.isNull() ? NULL : &icon);
+	m_taskbar->setOverlayIcon(icon.isNull() ? nullptr : &icon);
 }
 
 /*
@@ -1636,7 +1643,7 @@ bool MainWindow::parseCommandLineArgs(void)
 	//Process all command-line arguments
 	if(args.contains(CLI_PARAM_ADD_FILE))
 	{
-		foreach(const QString &fileName, args.values(CLI_PARAM_ADD_FILE))
+		for(const QString &fileName : args.values(CLI_PARAM_ADD_FILE))
 		{
 			handleCommand(IPC_OPCODE_ADD_FILE, QStringList() << fileName, flags);
 		}
@@ -1644,7 +1651,7 @@ bool MainWindow::parseCommandLineArgs(void)
 	}
 	if(args.contains(CLI_PARAM_ADD_JOB))
 	{
-		foreach(const QString &options, args.values(CLI_PARAM_ADD_JOB))
+		for(const QString &options : args.values(CLI_PARAM_ADD_JOB))
 		{
 			const QStringList optionValues = options.split('|', Qt::SkipEmptyParts);
 			if(optionValues.count() == 3)

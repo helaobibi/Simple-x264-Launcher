@@ -76,7 +76,7 @@ public:
 class AbstractEncoder : public AbstractTool
 {
 public:
-	AbstractEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile);
+	AbstractEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile);
 	virtual ~AbstractEncoder(void);
 
 	virtual bool runEncodingPass(AbstractSource* pipedSource, const QString outputFile, const ClipInfo &clipInfo, const int &pass = 0, const QString &passLogFile = QString());

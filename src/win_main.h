@@ -26,6 +26,7 @@
 
 //Qt
 #include <QMainWindow>
+#include <QPair>
 
 //Forward declarations
 class JobListModel;
@@ -51,7 +52,7 @@ namespace MUtils
 {
 	class IPCChannel;
 	class Taskbar7;
-	namespace CPUFetaures
+	namespace CPUFeatures
 	{
 		typedef struct _cpu_info_t cpu_info_t;
 	}
@@ -62,7 +63,7 @@ class MainWindow: public QMainWindow
 	Q_OBJECT
 
 public:
-	MainWindow(const MUtils::CPUFetaures::cpu_info_t &cpuFeatures, MUtils::IPCChannel *const ipcChannel);
+	MainWindow(const MUtils::CPUFeatures::cpu_info_t &cpuFeatures, MUtils::IPCChannel *const ipcChannel);
 	~MainWindow(void);
 
 protected:
@@ -107,12 +108,13 @@ private:
 	QScopedPointer<PreferencesModel> m_preferences;
 	QScopedPointer<RecentlyUsed> m_recentlyUsed;
 	
-	bool createJob(QString &sourceFileName, QString &outputFileName, OptionsModel *options, bool &runImmediately, const bool restart = false, int fileNo = -1, int fileTotal = 0, bool *applyToAll = NULL);
+	bool createJob(QString &sourceFileName, QString &outputFileName, OptionsModel *options, bool &runImmediately, const bool restart = false, int fileNo = -1, int fileTotal = 0, bool *applyToAll = nullptr);
 	bool createJobMultiple(const QStringList &filePathIn);
 
 	bool appendJob(const QString &sourceFileName, const QString &outputFileName, OptionsModel *options, const bool runImmediately);
 	void updateButtons(JobStatus status);
 	void updateTaskbar(JobStatus status, const QIcon &icon);
+	QPair<unsigned int, unsigned int> countJobs(void);
 	unsigned int countPendingJobs(void);
 	unsigned int countRunningJobs(void);
 

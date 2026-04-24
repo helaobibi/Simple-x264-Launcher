@@ -23,6 +23,7 @@
 
 //Qt
 #include <QThread>
+#include <atomic>
 
 class AbstractThread : public QThread
 {
@@ -36,15 +37,15 @@ public:
 	int getSuccess(void) { return m_success; }
 
 protected:
-	volatile int m_success;
-	volatile bool m_exception;
+	std::atomic<int> m_success;
+	std::atomic<bool> m_exception;
 
 	//Entry point
 	virtual void run(void);
 	
 	//Error handling
-	static void runChecked1(AbstractThread *const thread, volatile int &success, volatile bool *exception);
-	static void runChecked2(AbstractThread *const thread, volatile int &success, volatile bool *exception);
+	static void runChecked1(AbstractThread *const thread, std::atomic<int> &success, std::atomic<bool> *exception);
+	static void runChecked2(AbstractThread *const thread, std::atomic<int> &success, std::atomic<bool> *exception);
 
 	//Thread main
 	virtual int threadMain(void) = 0;

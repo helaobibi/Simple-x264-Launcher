@@ -30,12 +30,12 @@ class QLibrary;
 class SysinfoModel;
 class QFile;
 
-class BinariesCheckThread : public StarupThread
+class BinariesCheckThread : public StartupThread
 {
 	Q_OBJECT
 
 public:
-	static bool check(const SysinfoModel *const sysinfo, QString *const failedPath = NULL);
+	static bool check(const SysinfoModel *const sysinfo, QString *const failedPath = nullptr);
 
 protected:
 	BinariesCheckThread(const SysinfoModel *const sysinfo);

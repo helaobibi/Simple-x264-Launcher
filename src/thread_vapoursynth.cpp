@@ -52,7 +52,7 @@ static const char* const VPS_PATHS[] =
 	"/opt/homebrew/bin/vspipe",
 	"/usr/local/bin/vspipe",
 	"/usr/bin/vspipe",
-	NULL
+	nullptr
 };
 
 //Auxilary functions
@@ -131,7 +131,7 @@ void VapourSynthCheckThread::run(void)
 {
 	m_vpsPath[0U].clear();
 	m_vpsPath[1U].clear();
-	StarupThread::run();
+	StartupThread::run();
 }
 
 int VapourSynthCheckThread::threadMain(void)
@@ -139,7 +139,7 @@ int VapourSynthCheckThread::threadMain(void)
 	QString vspipePath;
 
 	// Search for vspipe in known macOS paths
-	for (size_t i = 0; VPS_PATHS[i] != NULL; i++)
+	for (size_t i = 0; VPS_PATHS[i] != nullptr; i++)
 	{
 		QFileInfo fi(VPS_PATHS[i]);
 		if (fi.exists() && fi.isFile() && fi.isExecutable())

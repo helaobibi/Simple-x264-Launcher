@@ -219,10 +219,10 @@ void MUtils::OS::system_message_err(const wchar_t *const title, const wchar_t *c
 }
 
 // ============================================================================
-// MUtils::CPUFetaures
+// MUtils::CPUFeatures
 // ============================================================================
 
-MUtils::CPUFetaures::cpu_info_t MUtils::CPUFetaures::detect(void)
+MUtils::CPUFeatures::cpu_info_t MUtils::CPUFeatures::detect(void)
 {
 	cpu_info_t cpuInfo;
 	cpuInfo.features = FLAG_MMX | FLAG_SSE | FLAG_SSE2; // All modern Macs support these

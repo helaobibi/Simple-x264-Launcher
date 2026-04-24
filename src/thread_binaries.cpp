@@ -21,6 +21,7 @@
 
 #include "thread_binaries.h"
 
+#include <memory>
 #include <QLibrary>
 #include <QEventLoop>
 #include <QTimer>
@@ -113,7 +114,7 @@ BinariesCheckThread::~BinariesCheckThread(void)
 void BinariesCheckThread::run(void)
 {
 	m_failedPath.clear();
-	StarupThread::run();
+	StartupThread::run();
 }
 
 int BinariesCheckThread::threadMain(void)
@@ -150,12 +151,12 @@ int BinariesCheckThread::threadMain(void)
 
 		if(fi.exists() && fi.isFile() && fi.isExecutable())
 		{
-			QScopedPointer<QFile> file(new QFile(*iter));
+			std::unique_ptr<QFile> file(new QFile(*iter));
 			if(file->open(QIODevice::ReadOnly))
 			{
 				if(currentFile < MAX_BINARIES)
 				{
-					m_binPath[currentFile++].reset(file.take());
+					m_binPath[currentFile++].reset(file.release());
 					continue;
 				}
 				qFatal("Current binary file exceeds max. number of binaries!");

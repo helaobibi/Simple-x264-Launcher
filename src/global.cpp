@@ -63,7 +63,7 @@
 #include <fstream>
 
 //Const
-static const char *g_x264_imageformats[] = {"png", "jpg", "gif", "ico", "svg", NULL};
+static const char *g_x264_imageformats[] = {"png", "jpg", "gif", "ico", "svg", nullptr};
 
 //Build version
 static const struct

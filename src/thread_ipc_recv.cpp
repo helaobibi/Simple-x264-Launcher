@@ -23,7 +23,7 @@
 #include "thread_ipc_recv.h"
 
 //Internal
-#include "Global.h"
+#include "global.h"
 #include "cli.h"
 #include "ipc.h"
 

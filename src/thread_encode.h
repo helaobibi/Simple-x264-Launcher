@@ -29,6 +29,7 @@
 #include <QMutex>
 #include <QStringList>
 #include <QSemaphore>
+#include <atomic>
 
 class SysinfoModel;
 class PreferencesModel;
@@ -81,8 +82,8 @@ protected:
 	const QString m_outputFileName;
 
 	//Flags
-	volatile bool m_abort;
-	volatile bool m_pause;
+	std::atomic<bool> m_abort;
+	std::atomic<bool> m_pause;
 	
 	//Synchronization
 	QSemaphore m_semaphorePaused;

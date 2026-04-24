@@ -22,8 +22,8 @@
 #pragma once
 
 #include <QObject>
+#include <QHash>
 
-template<class K, class T> class QHash;
 class QKeyEvent;
 class QMouseEvent;
 
@@ -48,6 +48,6 @@ protected:
 	bool eventFilter(QMouseEvent *mouseEvent);
 
 	QWidget *const m_target;
-	QHash<int, int> *m_keyMapping;
-	QHash<int, int> *m_mouseMapping;
+	QHash<int, int> m_keyMapping;
+	QHash<int, int> m_mouseMapping;
 };

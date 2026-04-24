@@ -27,6 +27,7 @@
 #include <QStringList>
 #include <QHash>
 #include <QRegularExpression>
+#include <atomic>
 
 class OptionsModel;
 class SysinfoModel;
@@ -45,7 +46,7 @@ class AbstractTool : public QObject
 	Q_OBJECT
 
 public:
-	AbstractTool(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause);
+	AbstractTool(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause);
 	virtual ~AbstractTool(void) {/*NOP*/}
 	
 	virtual QString getName(void) const = 0;
@@ -78,15 +79,15 @@ protected:
 	void setProgress(unsigned int newProgress) { emit progressChanged(newProgress); }
 	void setDetails(const QString &text) { emit detailsChanged(text); }
 
-	bool startProcess(QProcess &process, const QString &program, const QStringList &args, bool mergeChannels = true, const QStringList *const extraPath = NULL, const QHash<QString, QString> *const extraEnv = NULL);
+	bool startProcess(QProcess &process, const QString &program, const QStringList &args, bool mergeChannels = true, const QStringList *const extraPath = nullptr, const QHash<QString, QString> *const extraEnv = nullptr);
 
 	JobObject *const m_jobObject;
 	const OptionsModel *const m_options;
 	const SysinfoModel *const m_sysinfo;
 	const PreferencesModel *const m_preferences;
 	JobStatus &m_jobStatus;
-	volatile bool *const m_abort;
-	volatile bool *const m_pause;
+	std::atomic<bool> *const m_abort;
+	std::atomic<bool> *const m_pause;
 	QSemaphore *const m_semaphorePause;
 
 	static QString commandline2string(const QString &program, const QStringList &arguments);

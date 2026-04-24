@@ -33,11 +33,11 @@
 // Constructor
 //-------------------------------------
 
-StarupThread::StarupThread(void)
+StartupThread::StartupThread(void)
 {
 }
 
-StarupThread::~StarupThread(void)
+StartupThread::~StartupThread(void)
 {
 }
 
@@ -45,7 +45,7 @@ StarupThread::~StarupThread(void)
 // Utility functions
 //-------------------------------------
 
-QStringList StarupThread::runProcess(const QString &exePath, const QStringList &arguments, const QStringList *const extraPaths)
+QStringList StartupThread::runProcess(const QString &exePath, const QStringList &arguments, const QStringList *const extraPaths)
 {
 	QProcess process;
 

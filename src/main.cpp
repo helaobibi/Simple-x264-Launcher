@@ -77,9 +77,9 @@ static int simple_x264_main(int &argc, char **argv)
 	if(!arguments.isEmpty())
 	{
 		qDebug("Command-Line Arguments:");
-		foreach(const QString &key, arguments.uniqueKeys())
+		for(const QString &key : arguments.uniqueKeys())
 		{
-			foreach(const QString &val, arguments.values(key))
+			for(const QString &val : arguments.values(key))
 			{
 				if(!val.isEmpty())
 				{
@@ -93,7 +93,7 @@ static int simple_x264_main(int &argc, char **argv)
 	}
 
 	//Detect CPU capabilities
-	const MUtils::CPUFetaures::cpu_info_t cpuFeatures = MUtils::CPUFetaures::detect();
+	const MUtils::CPUFeatures::cpu_info_t cpuFeatures = MUtils::CPUFeatures::detect();
 	qDebug("   CPU vendor id  :  %s", MUTILS_UTF8(cpuFeatures.vendor));
 	qDebug("CPU brand string  :  %s", MUTILS_UTF8(cpuFeatures.brand));
 	qDebug("CPU architecture  :  %s", cpuFeatures.x64 ? "64-Bit" : "32-Bit");

@@ -35,9 +35,7 @@
 
 InputEventFilter::InputEventFilter(QWidget *target)
 :
-	m_target(target),
-	m_keyMapping(new QHash<int, int>()),
-	m_mouseMapping(new QHash<int, int>())
+	m_target(target)
 {
 	m_target->installEventFilter(this);
 }
@@ -45,18 +43,16 @@ InputEventFilter::InputEventFilter(QWidget *target)
 InputEventFilter::~InputEventFilter(void)
 {
 	m_target->removeEventFilter(this);
-	MUTILS_DELETE(m_keyMapping);
-	MUTILS_DELETE(m_mouseMapping);
 }
 
 void InputEventFilter::addKeyFilter(const int &keyCode, const int &tag)
 {
-	m_keyMapping->insert(keyCode, tag);
+	m_keyMapping.insert(keyCode, tag);
 }
 
 void InputEventFilter::addMouseFilter(const int &mouseCode, const int &tag)
 {
-	m_mouseMapping->insert(mouseCode, tag);
+	m_mouseMapping.insert(mouseCode, tag);
 }
 
 bool InputEventFilter::eventFilter(QObject *obj, QEvent *event)
@@ -86,9 +82,9 @@ bool InputEventFilter::eventFilter(QObject *obj, QEvent *event)
 bool InputEventFilter::eventFilter(QKeyEvent *keyEvent)
 {
 	const int keyCode = keyEvent->key() | keyEvent->modifiers();
-	if(m_keyMapping->contains(keyCode))
+	if(m_keyMapping.contains(keyCode))
 	{
-		emit keyPressed(m_keyMapping->value(keyCode));
+		emit keyPressed(m_keyMapping.value(keyCode));
 		return true;
 	}
 	return false;
@@ -96,9 +92,9 @@ bool InputEventFilter::eventFilter(QKeyEvent *keyEvent)
 
 bool InputEventFilter::eventFilter(QMouseEvent *mouseEvent)
 {
-	if(m_mouseMapping->contains(mouseEvent->button()))
+	if(m_mouseMapping.contains(mouseEvent->button()))
 	{
-		emit mouseClicked(m_mouseMapping->value(mouseEvent->button()));
+		emit mouseClicked(m_mouseMapping.value(mouseEvent->button()));
 		return true;
 	}
 	return false;

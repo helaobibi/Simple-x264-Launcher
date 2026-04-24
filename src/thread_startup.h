@@ -26,17 +26,17 @@
 //Qt
 #include <QStringList>
 
-class StarupThread : public AbstractThread
+class StartupThread : public AbstractThread
 {
 	Q_OBJECT
 
 public:
-	StarupThread(void);
-	~StarupThread(void);
+	StartupThread(void);
+	~StartupThread(void);
 
 protected slots:
 	void start(Priority priority = InheritPriority) { QThread::start(priority); }
 
 protected:
-	static QStringList runProcess(const QString &exePath, const QStringList &args, const QStringList *const extraPaths = NULL);
+	static QStringList runProcess(const QString &exePath, const QStringList &args, const QStringList *const extraPaths = nullptr);
 };

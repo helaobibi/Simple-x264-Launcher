@@ -66,8 +66,8 @@ public:
 	}
 private:
 	//Disable copy constructor and assignment
-	ExecutionStateHandler(const ExecutionStateHandler &other) {}
-	ExecutionStateHandler &operator=(const ExecutionStateHandler &) {}
+	ExecutionStateHandler(const ExecutionStateHandler &other) = delete;
+	ExecutionStateHandler &operator=(const ExecutionStateHandler &) = delete;
 
 	//Prevent object allocation on the heap
 	void *operator new(size_t);   void *operator new[](size_t);
@@ -121,8 +121,8 @@ EncodeThread::EncodeThread(const QString &sourceFileName, const QString &outputF
 	m_preferences(preferences),
 	m_jobObject(new JobObject),
 	m_semaphorePaused(0),
-	m_encoder(NULL),
-	m_pipedSource(NULL)
+	m_encoder(nullptr),
+	m_pipedSource(nullptr)
 {
 	m_abort = false;
 	m_pause = false;

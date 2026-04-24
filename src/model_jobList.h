@@ -27,7 +27,7 @@
 #include "QAbstractItemModel"
 #include <QUuid>
 #include <QList>
-#include <QMap>
+#include <QHash>
 
 class PreferencesModel;
 
@@ -74,12 +74,13 @@ public:
 
 protected:
 	QList<QUuid> m_jobs;
-	QMap<QUuid, QString> m_name;
-	QMap<QUuid, EncodeThread*> m_threads;
-	QMap<QUuid, JobStatus> m_status;
-	QMap<QUuid, unsigned int> m_progress;
-	QMap<QUuid, LogFileModel*> m_logFile;
-	QMap<QUuid, QString> m_details;
+	QHash<QUuid, QString> m_name;
+	QHash<QUuid, EncodeThread*> m_threads;
+	QHash<QUuid, JobStatus> m_status;
+	QHash<QUuid, unsigned int> m_progress;
+	QHash<QUuid, LogFileModel*> m_logFile;
+	QHash<QUuid, QString> m_details;
+	QHash<QUuid, int> m_jobIndexMap;
 	PreferencesModel *m_preferences;
 
 public slots:

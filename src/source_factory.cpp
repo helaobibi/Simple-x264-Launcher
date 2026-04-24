@@ -27,9 +27,9 @@
 //MUtils compat
 #include "mutils_compat.h"
 
-AbstractSource *SourceFactory::createSource(const SourceType &type, JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile)
+AbstractSource *SourceFactory::createSource(const SourceType &type, JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile)
 {
-	AbstractSource *source = NULL;
+	AbstractSource *source = nullptr;
 	switch(type)
 	{
 		case SourceType_VPS: source = new VapoursynthSource(jobObject, options, sysinfo, preferences, jobStatus, abort, pause, semaphorePause, sourceFile); break;
@@ -40,7 +40,7 @@ AbstractSource *SourceFactory::createSource(const SourceType &type, JobObject *j
 
 const AbstractSourceInfo& SourceFactory::getSourceInfo(const SourceType &type)
 {
-	const AbstractSourceInfo *sourceInfo = NULL;
+	const AbstractSourceInfo *sourceInfo = nullptr;
 	switch(type)
 	{
 		case SourceType_VPS: sourceInfo = &VapoursynthSource::getSourceInfo(); break;

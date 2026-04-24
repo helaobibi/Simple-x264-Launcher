@@ -84,7 +84,7 @@ bool StringValidator::checkPrefix(const QStringList &input, const bool &doubleMi
 {
 	for(QStringList::ConstIterator iter = input.constBegin(); iter != input.constEnd(); iter++)
 	{
-		static const char *const c[3] = { "--", "-", NULL };
+		static const char *const c[3] = { "--", "-", nullptr };
 		for(size_t i = 0; c[i]; i++)
 		{
 			const QString prefix = QString::fromLatin1(c[i]);
@@ -116,7 +116,7 @@ bool StringValidator::checkPrefix(const QStringList &input, const bool &doubleMi
 
 bool StringValidator::checkCharacters(const QStringList &input) const
 {
-	static const char c[] = {'*', '?', '<', '>', '|', NULL};
+	static const char c[] = {'*', '?', '<', '>', '|', '\0'};
 
 	for(QStringList::ConstIterator iter = input.constBegin(); iter != input.constEnd(); iter++)
 	{
@@ -168,7 +168,7 @@ const bool &StringValidator::setStatus(const bool &flag, const QString &toolName
 QValidator::State StringValidatorEncoder::validate(QString &input, int &pos) const
 {
 	static const char *const params[] = { "D", "B", "o", "h", "p", "q", "u", "preset", "tune", "profile", "stdin",
-		"crf", "bitrate", "qp", "pass", "stats", "output", "output-depth", "help", "quiet", "codec", "y4m", NULL };
+		"crf", "bitrate", "qp", "pass", "stats", "output", "output-depth", "help", "quiet", "codec", "y4m", nullptr };
 
 	const QString commandLine = input.trimmed();
 	const QStringList tokens =  commandLine.isEmpty() ? QStringList() : MUtils::OS::crack_command_line(commandLine);
@@ -183,7 +183,7 @@ QValidator::State StringValidatorEncoder::validate(QString &input, int &pos) con
 
 QValidator::State StringValidatorSource::validate(QString &input, int &pos) const
 {
-	static const char *const params[] = {"o", "frames", "seek", "raw", "hfyu", "slave", NULL};
+	static const char *const params[] = {"o", "frames", "seek", "raw", "hfyu", "slave", nullptr};
 
 	const QString commandLine = input.trimmed();
 	const QStringList tokens =  commandLine.isEmpty() ? QStringList() : MUtils::OS::crack_command_line(commandLine);

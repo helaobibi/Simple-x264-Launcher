@@ -154,19 +154,20 @@ bool LogFileModel::saveToLocalFile(const QString &fileName) const
 
 void LogFileModel::addLogMessage(const QUuid &jobId, const qint64 &timeStamp, const QString &text)
 {
-	beginInsertRows(QModelIndex(), m_lines.count(), m_lines.count());
-
 	if(m_firstLine)
 	{
 		m_firstLine = false;
+		beginResetModel();
 		m_lines.clear();
+		endResetModel();
 	}
 
 	const QStringList lines = text.split("\n");
+	const int count = m_lines.count();
+	beginInsertRows(QModelIndex(), count, count + lines.count() - 1);
 	for(QStringList::ConstIterator iter = lines.constBegin(); iter != lines.constEnd(); iter++)
 	{
 		m_lines << qMakePair(timeStamp, (*iter));
 	}
-
 	endInsertRows();
 }

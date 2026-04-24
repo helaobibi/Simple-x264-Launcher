@@ -65,7 +65,7 @@
 	for(int i = 0; i < ui->cbxTemplate->count(); i++) \
 	{ \
 		const OptionsModel* temp = reinterpret_cast<const OptionsModel*>(ui->cbxTemplate->itemData(i).value<const void*>()); \
-		if(temp == NULL) \
+		if(temp == nullptr) \
 		{ \
 			ui->cbxTemplate->blockSignals(true); \
 			ui->cbxTemplate->removeItem(i); \
@@ -206,14 +206,14 @@ AddJobDialog::~AddJobDialog(void)
 			continue;
 		}
 		const OptionsModel *item = reinterpret_cast<const OptionsModel*>(ui->cbxTemplate->itemData(i).value<const void*>());
-		ui->cbxTemplate->setItemData(i, QVariant::fromValue<const void*>(NULL));
+		ui->cbxTemplate->setItemData(i, QVariant::fromValue<const void*>(nullptr));
 		MUTILS_DELETE(item);
 	}
 
 	//Free validators
 	if(const QValidator *tmp = ui->editCustomX264Params->validator())
 	{
-		ui->editCustomX264Params->setValidator(NULL);
+		ui->editCustomX264Params->setValidator(nullptr);
 		MUTILS_DELETE(tmp);
 	}
 
@@ -263,7 +263,7 @@ void AddJobDialog::dragEnterEvent(QDragEnterEvent *event)
 {
 	bool accept[2] = {false, false};
 
-	foreach(const QString &fmt, event->mimeData()->formats())
+	for(const QString &fmt : event->mimeData()->formats())
 	{
 		accept[0] = accept[0] || fmt.contains("text/uri-list", Qt::CaseInsensitive);
 		accept[1] = accept[1] || fmt.contains("FileNameW", Qt::CaseInsensitive);
@@ -282,7 +282,7 @@ void AddJobDialog::dropEvent(QDropEvent *event)
 
 	if(urls.count() > 1)
 	{
-		QDragEnterEvent dragEvent(event->pos(), event->proposedAction(), event->mimeData(), Qt::NoButton, Qt::NoModifier);
+		QDragEnterEvent dragEvent(event->position().toPoint(), event->proposedAction(), event->mimeData(), Qt::NoButton, Qt::NoModifier);
 		if(qApp->notify(parent(), &dragEvent))
 		{
 			qApp->notify(parent(), event);
@@ -452,7 +452,7 @@ void AddJobDialog::accept(void)
 	{
 		if(!m_sysinfo->hasVapourSynth())
 		{
-			if(QMessageBox::warning(this, tr("VapurSynth unsupported!"), tr("<nobr>A VapourSynth script was selected as input, although VapourSynth is <b>not/<b> available!</nobr>"), tr("Abort"), tr("Ignore (at your own risk!)")) != 1)
+			if(QMessageBox::warning(this, tr("VapurSynth unsupported!"), tr("<nobr>A VapourSynth script was selected as input, although VapourSynth is <b>not/<b> available!</nobr>"), QMessageBox::Abort | QMessageBox::Ignore) != QMessageBox::Ignore)
 			{
 				return;
 			}
@@ -460,7 +460,7 @@ void AddJobDialog::accept(void)
 	}
 	else if(!encoderInfo.isInputTypeSupported(sourceType))
 	{
-		if(QMessageBox::warning(this, tr("Unsupported input format"), tr("<nobr>The selected encoder does <b>not</b> support the selected input format!</nobr>"), tr("Abort"), tr("Ignore (at your own risk!)")) != 1)
+		if(QMessageBox::warning(this, tr("Unsupported input format"), tr("<nobr>The selected encoder does <b>not</b> support the selected input format!</nobr>"), QMessageBox::Abort | QMessageBox::Ignore) != QMessageBox::Ignore)
 		{
 			return;
 		}
@@ -518,7 +518,7 @@ void AddJobDialog::browseButtonClicked(void)
 {
 	if(QObject::sender() == ui->buttonBrowseSource)
 	{
-		QString filePath = QFileDialog::getOpenFileName(this, tr("Open Source File"), currentSourcePath(true), getInputFilterLst(), NULL, QFileDialog::DontUseNativeDialog);
+		QString filePath = QFileDialog::getOpenFileName(this, tr("Open Source File"), currentSourcePath(true), getInputFilterLst(), nullptr, QFileDialog::DontUseNativeDialog);
 		if(!(filePath.isNull() || filePath.isEmpty()))
 		{
 			QString destFile = generateOutputFileName(filePath, currentOutputPath(), currentOutputIndx(), m_preferences->getSaveToSourcePath());
@@ -564,7 +564,7 @@ void AddJobDialog::configurationChanged(void)
 	if(options)
 	{
 		ui->cbxTemplate->blockSignals(true);
-		ui->cbxTemplate->insertItem(0, tr("<Modified Configuration>"), QVariant::fromValue<const void*>(NULL));
+		ui->cbxTemplate->insertItem(0, tr("<Modified Configuration>"), QVariant::fromValue<const void*>(nullptr));
 		ui->cbxTemplate->setCurrentIndex(0);
 		ui->cbxTemplate->blockSignals(false);
 	}
@@ -597,8 +597,8 @@ void AddJobDialog::saveTemplateButtonClicked(void)
 		}
 	}
 
-	QScopedPointer<OptionsModel> options(new OptionsModel(m_sysinfo));
-	saveOptions(options.data());
+	std::unique_ptr<OptionsModel> options(new OptionsModel(m_sysinfo));
+	saveOptions(options.get());
 
 	if(options->equals(m_defaults))
 	{
@@ -618,7 +618,7 @@ void AddJobDialog::saveTemplateButtonClicked(void)
 			continue;
 		}
 		const OptionsModel* test = reinterpret_cast<const OptionsModel*>(ui->cbxTemplate->itemData(i).value<const void*>());
-		if(test != NULL)
+		if(test != nullptr)
 		{
 			if(options->equals(test))
 			{
@@ -659,11 +659,7 @@ void AddJobDialog::saveTemplateButtonClicked(void)
 		if(name.contains('<') || name.contains('>') || name.contains('\\') || name.contains('/') || name.contains('"'))
 		{
 			QMessageBox::warning (this, tr("Invalid Name"), tr("<nobr>Sorry, the name you have entered is invalid!</nobr>"));
-			while(name.contains('<')) name.remove('<');
-			while(name.contains('>')) name.remove('>');
-			while(name.contains('\\')) name.remove('\\');
-			while(name.contains('/')) name.remove('/');
-			while(name.contains('"')) name.remove('"');
+			name.remove('<').remove('>').remove('\\').remove('/').remove('"');
 			name = name.simplified();
 			continue;
 		}
@@ -678,7 +674,7 @@ void AddJobDialog::saveTemplateButtonClicked(void)
 		break;
 	}
 	
-	if(!OptionsModel::saveTemplate(options.data(), name))
+	if(!OptionsModel::saveTemplate(options.get(), name))
 	{
 		QMessageBox::critical(this, tr("Save Failed"), tr("Sorry, the template could not be saved!"));
 		return;
@@ -689,15 +685,15 @@ void AddJobDialog::saveTemplateButtonClicked(void)
 	{
 		if(ui->cbxTemplate->itemText(i).compare(name, Qt::CaseInsensitive) == 0)
 		{
-			QScopedPointer<const OptionsModel> oldItem(reinterpret_cast<const OptionsModel*>(ui->cbxTemplate->itemData(i).value<const void*>()));
-			ui->cbxTemplate->setItemData(i, QVariant::fromValue<const void*>(options.take()));
+			std::unique_ptr<const OptionsModel> oldItem(reinterpret_cast<const OptionsModel*>(ui->cbxTemplate->itemData(i).value<const void*>()));
+			ui->cbxTemplate->setItemData(i, QVariant::fromValue<const void*>(options.release()));
 			ui->cbxTemplate->setCurrentIndex(i);
 		}
 	}
-	if(!options.isNull())
+	if(options)
 	{
 		const int index = ui->cbxTemplate->model()->rowCount();
-		ui->cbxTemplate->insertItem(index, name, QVariant::fromValue<const void*>(options.take()));
+		ui->cbxTemplate->insertItem(index, name, QVariant::fromValue<const void*>(options.release()));
 		ui->cbxTemplate->setCurrentIndex(index);
 	}
 	ui->cbxTemplate->blockSignals(false);

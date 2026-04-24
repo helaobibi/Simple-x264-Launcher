@@ -23,7 +23,7 @@
 #include "thread_ipc_send.h"
 
 //Internal
-#include "Global.h"
+#include "global.h"
 #include "cli.h"
 #include "ipc.h"
 
@@ -84,7 +84,7 @@ int IPCThread_Send::threadMain(void)
 	//Process all command-line arguments
 	if(args.contains(CLI_PARAM_ADD_FILE))
 	{
-		foreach(const QString &fileName, args.values(CLI_PARAM_ADD_FILE))
+		for(const QString &fileName : args.values(CLI_PARAM_ADD_FILE))
 		{
 			if(!m_ipcChannel->send(IPC_OPCODE_ADD_FILE, flags, QStringList() << fileName))
 			{
@@ -95,7 +95,7 @@ int IPCThread_Send::threadMain(void)
 	}
 	if(args.contains(CLI_PARAM_ADD_JOB))
 	{
-		foreach(const QString &options, args.values(CLI_PARAM_ADD_JOB))
+		for(const QString &options : args.values(CLI_PARAM_ADD_JOB))
 		{
 			const QStringList optionValues = options.split('|', Qt::SkipEmptyParts);
 			if(optionValues.count() == 3)

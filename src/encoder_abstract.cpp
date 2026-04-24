@@ -45,7 +45,7 @@
 // Constructor & Destructor
 // ------------------------------------------------------------
 
-AbstractEncoder::AbstractEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile)
+AbstractEncoder::AbstractEncoder(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, std::atomic<bool> *abort, std::atomic<bool> *pause, QSemaphore *semaphorePause, const QString &sourceFile, const QString &outputFile)
 :
 	AbstractTool(jobObject, options, sysinfo, preferences, jobStatus, abort, pause, semaphorePause),
 	m_sourceFile(sourceFile),
@@ -70,11 +70,15 @@ bool AbstractEncoder::runEncodingPass(AbstractSource* pipedSource, const QString
 	
 	if(pipedSource)
 	{
-		pipedSource->createProcess(processEncode, processInput);
+		if(!pipedSource->createProcess(processEncode, processInput))
+		{
+			log("Failed to create piped source process!");
+			return false;
+		}
 	}
 
 	QStringList cmdLine_Encode;
-	buildCommandLine(cmdLine_Encode, (pipedSource != NULL), clipInfo, m_indexFile, pass, passLogFile);
+	buildCommandLine(cmdLine_Encode, (pipedSource != nullptr), clipInfo, m_indexFile, pass, passLogFile);
 
 	log("Creating encoder process:");
 	const QStringList extraPaths = getExtraPaths();
@@ -257,7 +261,7 @@ double AbstractEncoder::estimateSize(const QString &fileName, const double &prog
 		QFileInfo fileInfo(fileName);
 		if(fileInfo.exists() && fileInfo.isFile())
 		{
-			const qint64 currentSize = QFileInfo(fileName).size();
+			const qint64 currentSize = fileInfo.size();
 			estimatedSize = static_cast<double>(currentSize) * (1.0 / qBound(0.0, progress, 1.0));
 		}
 	}
@@ -266,7 +270,7 @@ double AbstractEncoder::estimateSize(const QString &fileName, const double &prog
 
 QString AbstractEncoder::sizeToString(qint64 size)
 {
-	static char *prefix[5] = {"Byte", "KB", "MB", "GB", "TB"};
+	static const char *const prefix[5] = {"Byte", "KB", "MB", "GB", "TB"};
 
 	if(size > 1024LL)
 	{

@@ -246,7 +246,7 @@ void OptionsModel::fixTemplate(QSettings &settingsFile)
 		settingsFile.setValue(KEY_ENCODER_VARIANT, 0);
 	}
 
-	static const char *legacyKey[] = { "custom_params", "custom_params_x264", NULL };
+	static const char *legacyKey[] = { "custom_params", "custom_params_x264", nullptr };
 	for(int i = 0; legacyKey[i]; i++)
 	{
 		if(settingsFile.contains(legacyKey[i]))

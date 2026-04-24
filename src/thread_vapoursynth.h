@@ -30,7 +30,7 @@ class QFile;
 class QFileInfo;
 class SysinfoModel;
 
-class VapourSynthCheckThread : public StarupThread
+class VapourSynthCheckThread : public StartupThread
 {
 	Q_OBJECT
 
