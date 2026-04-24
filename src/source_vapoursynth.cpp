@@ -1,0 +1,250 @@
+///////////////////////////////////////////////////////////////////////////////
+// Simple x264 Launcher
+// Copyright (C) 2004-2024 LoRd_MuldeR <MuldeR2@GMX.de>
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//
+// http://www.gnu.org/licenses/gpl-2.0.txt
+///////////////////////////////////////////////////////////////////////////////
+
+#include "source_vapoursynth.h"
+
+#include "global.h"
+#include "model_sysinfo.h"
+
+#include <QDir>
+#include <QProcess>
+#include <QPair>
+
+static const unsigned int VER_X264_VSPIPE_API =  3;
+static const unsigned int VER_X264_VSPIPE_VER = 57;
+
+// ------------------------------------------------------------
+// Encoder Info
+// ------------------------------------------------------------
+
+class VapoursyntSourceInfo : public AbstractSourceInfo
+{
+public:
+	virtual QString getBinaryPath(const SysinfoModel *const sysinfo, const bool& x64) const
+	{
+		Q_UNUSED(x64);
+		return QString("%1/vspipe").arg(sysinfo->getVPSPath());
+	}
+};
+
+static const VapoursyntSourceInfo s_vapoursynthEncoderInfo;
+
+const AbstractSourceInfo &VapoursynthSource::getSourceInfo(void)
+{
+	return s_vapoursynthEncoderInfo;
+}
+
+// ------------------------------------------------------------
+// Constructor & Destructor
+// ------------------------------------------------------------
+
+VapoursynthSource::VapoursynthSource(JobObject *jobObject, const OptionsModel *options, const SysinfoModel *const sysinfo, const PreferencesModel *const preferences, JobStatus &jobStatus, volatile bool *abort, volatile bool *pause, QSemaphore *semaphorePause, const QString &sourceFile)
+:
+	AbstractSource(jobObject, options, sysinfo, preferences, jobStatus, abort, pause, semaphorePause, sourceFile)
+{
+	/*Nothing to do here*/
+}
+
+VapoursynthSource::~VapoursynthSource(void)
+{
+	/*Nothing to do here*/
+}
+
+QString VapoursynthSource::getName(void) const
+{
+	return tr("VapourSynth (vpy)");
+}
+
+// ------------------------------------------------------------
+// Check Version
+// ------------------------------------------------------------
+
+bool VapoursynthSource::isSourceAvailable()
+{
+	if (m_sysinfo->hasVapourSynth())
+	{
+		if (m_sysinfo->getVapourSynth(SysinfoModel::VapourSynth_X64) && (!m_sysinfo->getVPSPath().isEmpty()))
+		{
+			return true;
+		}
+	}
+
+	log(tr("\nVPY INPUT REQUIRES VAPOURSYNTH, BUT IT IS *NOT* AVAILABLE !!!"));
+	return false;
+}
+
+void VapoursynthSource::checkVersion_init(QList<QRegularExpression*> &patterns, QStringList &cmdLine)
+{
+	cmdLine << "--version";
+	patterns << new QRegularExpression("\\bVapourSynth\\b", QRegularExpression::CaseInsensitiveOption);
+	patterns << new QRegularExpression("\\bCore\\s+r(\\d+)\\b", QRegularExpression::CaseInsensitiveOption);
+	patterns << new QRegularExpression("\\bAPI\\s+r(\\d+)\\b", QRegularExpression::CaseInsensitiveOption);
+}
+
+void VapoursynthSource::checkVersion_parseLine(const QString &line, const QList<QRegularExpression*> &patterns, unsigned int &core, unsigned int &build, bool &modified)
+{
+	QRegularExpressionMatch match;
+
+	if((match = patterns[1]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) build = temp;
+	}
+	else if((match = patterns[2]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) core = temp;
+	}
+
+	if(!line.isEmpty())
+	{
+		log(line);
+	}
+}
+
+QString VapoursynthSource::printVersion(const unsigned int &revision, const bool &modified)
+{
+	unsigned int core, build;
+	splitRevision(revision, core, build);
+
+	return tr("VapourSynth version: r%1 (API r%2)").arg(QString::number(build), QString::number(core));
+}
+
+bool VapoursynthSource::isVersionSupported(const unsigned int &revision, const bool &modified)
+{
+	unsigned int core, build;
+	splitRevision(revision, core, build);
+
+	if((build < VER_X264_VSPIPE_VER) || (core < VER_X264_VSPIPE_API))
+	{
+		
+		if(core < VER_X264_VSPIPE_API)
+		{
+			log(tr("\nERROR: Your version of VapourSynth is unsupported! (requires API r%1 or newer)").arg(QString::number(VER_X264_VSPIPE_API)));
+		}
+		if(build < VER_X264_VSPIPE_VER)
+		{
+			log(tr("\nERROR: Your version of VapourSynth is unsupported! (requires version r%1 or newer)").arg(QString::number(VER_X264_VSPIPE_VER)));
+		}
+		log(tr("You can find the latest VapourSynth version at: http://www.vapoursynth.com/"));
+		return false;
+	}
+
+	if(core != VER_X264_VSPIPE_API)
+	{
+		log(tr("\nWARNING: Running with an unknown VapourSynth API version, problem may appear! (this application works best with API r%1)").arg(QString::number(VER_X264_VSPIPE_API)));
+	}
+
+	return true;
+}
+
+// ------------------------------------------------------------
+// Check Source Properties
+// ------------------------------------------------------------
+
+void VapoursynthSource::checkSourceProperties_init(QList<QRegularExpression*> &patterns, QStringList &cmdLine)
+{
+	cmdLine << "--info";
+	cmdLine << QDir::toNativeSeparators(x264_path2ansi(m_sourceFile, true));
+	cmdLine << "-";
+
+	patterns << new QRegularExpression("\\bFrames:\\s+(\\d+)\\b");
+	patterns << new QRegularExpression("\\bWidth:\\s+(\\d+)\\b");
+	patterns << new QRegularExpression("\\bHeight:\\s+(\\d+)\\b");
+	patterns << new QRegularExpression("\\bFPS:\\s+(\\d+)\\b");
+	patterns << new QRegularExpression("\\bFPS:\\s+(\\d+)/(\\d+)\\b");
+}
+
+void VapoursynthSource::checkSourceProperties_parseLine(const QString &line, const QList<QRegularExpression*> &patterns, ClipInfo &clipInfo)
+{
+	QRegularExpressionMatch match;
+
+	if((match = patterns[0]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) clipInfo.setFrameCount(temp);
+	}
+	if((match = patterns[1]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) clipInfo.setFrameSize(temp, clipInfo.getFrameSize().second);
+	}
+	if((match = patterns[2]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) clipInfo.setFrameSize(clipInfo.getFrameSize().first, temp);
+	}
+	if((match = patterns[3]->match(line)).hasMatch())
+	{
+		bool ok = false;
+		unsigned int temp = match.captured(1).toUInt(&ok);
+		if(ok) clipInfo.setFrameRate(temp, 0);
+	}
+	if((match = patterns[4]->match(line)).hasMatch())
+	{
+		bool ok1 = false, ok2 = false;
+		unsigned int temp1 = match.captured(1).toUInt(&ok1);
+		unsigned int temp2 = match.captured(2).toUInt(&ok2);
+		if(ok1 && ok2)
+		{
+			clipInfo.setFrameRate(temp1, temp2);
+		}
+	}
+
+	if(!line.isEmpty())
+	{
+		log(line);
+	}
+}
+
+// ------------------------------------------------------------
+// Source Processing
+// ------------------------------------------------------------
+
+void VapoursynthSource::buildCommandLine(QStringList &cmdLine)
+{
+	cmdLine << "-c" << "y4m";
+	cmdLine << QDir::toNativeSeparators(x264_path2ansi(m_sourceFile, true));
+	cmdLine << "-";
+}
+
+void VapoursynthSource::flushProcess(QProcess &processInput)
+{
+	while(processInput.bytesAvailable() > 0)
+	{
+		log(tr("vpyp [info]: %1").arg(QString::fromUtf8(processInput.readLine()).simplified()));
+	}
+	
+	if(processInput.exitCode() != EXIT_SUCCESS)
+	{
+		const int exitCode = processInput.exitCode();
+		log(tr("\nWARNING: Input process exited with error (code: %1), your encode might be *incomplete* !!!").arg(QString::number(exitCode)));
+		if((exitCode < 0) || (exitCode >= 32))
+		{
+			log(tr("\nIMPORTANT: The Vapoursynth process terminated abnormally. This means Vapoursynth or one of your Vapoursynth-Plugin's just crashed."));
+		}
+	}
+}
